@@ -1,5 +1,4 @@
 const { Sequelize } = require('sequelize');
-require('dotenv').config({ path: '/workspaces/matting/.env' });
 
 const sequelize = new Sequelize(
   process.env.DATABASE_URL || 'postgresql://mlmmp_user:mlmmp_password_dev_2024@localhost:5432/mlmmp',
@@ -10,32 +9,30 @@ const sequelize = new Sequelize(
       max: 5,
       min: 0,
       acquire: 30000,
-      idle: 10000,
-    },
+      idle: 10000
+    }
   }
 );
 
-const Profile = require('./Profile')(sequelize);
-const Like = require('./Like')(sequelize);
-const Message = require('./Message')(sequelize);
+const db = {};
 
-// リレーション
-Profile.hasMany(Like, { foreignKey: 'fromProfileId', as: 'sentLikes' });
-Profile.hasMany(Like, { foreignKey: 'toProfileId', as: 'receivedLikes' });
-Like.belongsTo(Profile, { foreignKey: 'fromProfileId', as: 'fromProfile' });
-Like.belongsTo(Profile, { foreignKey: 'toProfileId', as: 'toProfile' });
+db.Sequelize = Sequelize;
+db.sequelize = sequelize;
 
-Profile.hasMany(Message, { foreignKey: 'fromProfileId', as: 'sentMessages' });
-Profile.hasMany(Message, { foreignKey: 'toProfileId', as: 'receivedMessages' });
-Message.belongsTo(Profile, { foreignKey: 'fromProfileId', as: 'fromProfile' });
-Message.belongsTo(Profile, { foreignKey: 'toProfileId', as: 'toProfile' });
+// Models
+db.Profile = require('./Profile')(sequelize, Sequelize.DataTypes);
+db.Like = require('./Like')(sequelize, Sequelize.DataTypes);
+db.Message = require('./Message')(sequelize, Sequelize.DataTypes);
 
-const db = {
-  sequelize,
-  Sequelize,
-  Profile,
-  Like,
-  Message,
-};
+// Associations
+db.Profile.hasMany(db.Like, { foreignKey: 'fromProfileId', as: 'sentLikes' });
+db.Profile.hasMany(db.Like, { foreignKey: 'toProfileId', as: 'receivedLikes' });
+db.Like.belongsTo(db.Profile, { foreignKey: 'fromProfileId', as: 'fromProfile' });
+db.Like.belongsTo(db.Profile, { foreignKey: 'toProfileId', as: 'toProfile' });
+
+db.Profile.hasMany(db.Message, { foreignKey: 'fromProfileId', as: 'sentMessages' });
+db.Profile.hasMany(db.Message, { foreignKey: 'toProfileId', as: 'receivedMessages' });
+db.Message.belongsTo(db.Profile, { foreignKey: 'fromProfileId', as: 'fromProfile' });
+db.Message.belongsTo(db.Profile, { foreignKey: 'toProfileId', as: 'toProfile' });
 
 module.exports = db;

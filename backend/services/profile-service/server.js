@@ -12,43 +12,35 @@ app.use(cors());
 app.use(express.json());
 
 app.get('/health', (req, res) => {
-  res.json({
-    status: 'OK',
-    service: 'profile-service',
-    timestamp: new Date().toISOString()
-  });
+  res.json({ status: 'OK' });
 });
 
 app.use('/api/profiles', profileRoutes);
 app.use('/api/likes', likeRoutes);
 app.use('/api/messages', messageRoutes);
 
-// データベース初期化 + テストデータ自動投入
-db.sequelize.sync({ force: false }).then(async () => {
-  console.log('✅ Database synchronized');
+console.log('🚀 Starting...');
+
+db.sequelize.sync({ force: true }).then(async () => {
+  console.log('✅ DB created');
   
-  // データが空の場合のみテストデータ投入
-  const count = await db.Profile.count();
-  if (count === 0) {
-    console.log('📝 テストデータ作成中...');
-    
-    await db.Profile.bulkCreate([
-      { name: '太郎', age: 28, gender: 'male', country: 'JP', city: '東京', bio: 'エンジニアです' },
-      { name: '花子', age: 25, gender: 'female', country: 'JP', city: '大阪', bio: '旅行が好きです' },
-      { name: '健太', age: 32, gender: 'male', country: 'JP', city: '福岡', bio: 'スポーツ好き' },
-      { name: '美咲', age: 27, gender: 'female', country: 'JP', city: '名古屋', bio: 'カフェ巡りが趣味' },
-      { name: 'John', age: 30, gender: 'male', country: 'US', city: 'New York', bio: 'Software Engineer' }
-    ]);
-    
-    console.log('✅ テストデータ5件作成完了');
-  } else {
-    console.log(`✅ 既存データ: ${count}件`);
-  }
+  const profiles = await db.Profile.bulkCreate([
+    { name: '太郎', age: 28, gender: 'male', country: 'JP', city: '渋谷区', bio: 'よろしく' },
+    { name: '花子', age: 25, gender: 'female', country: 'JP', city: '大阪市', bio: 'よろしく' },
+    { name: '健太', age: 32, gender: 'male', country: 'JP', city: '福岡市', bio: 'よろしく' },
+    { name: '美咲', age: 27, gender: 'female', country: 'JP', city: '名古屋市', bio: 'よろしく' },
+    { name: 'John', age: 30, gender: 'male', country: 'US', city: 'New York', bio: 'Hi' }
+  ]);
+  
+  console.log('✅ Created', profiles.length, 'profiles');
+  profiles.forEach(p => console.log(`  - ${p.name} (${p.id})`));
   
   app.listen(PORT, () => {
-    console.log(`Profile Service listening on port ${PORT}`);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log(`✅ READY on :${PORT}`);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   });
 }).catch(err => {
-  console.error('❌ Database sync error:', err);
+  console.error('❌ Error:', err.message);
   process.exit(1);
 });
