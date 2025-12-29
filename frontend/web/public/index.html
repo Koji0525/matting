@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>MLMMP - 検索</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+    .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; position: relative; }
+    .header h1 { font-size: 2.5em; }
+    .current-user { position: absolute; top: 15px; right: 30px; background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 20px; }
+    .admin { background: #fff3cd; padding: 15px 30px; border-bottom: 2px solid #ffc107; display: flex; justify-content: space-between; align-items: center; }
+    .admin select { padding: 10px; border: 2px solid #ffc107; border-radius: 5px; font-size: 16px; }
+    .chat-link { padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; }
+    .content { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; padding: 30px; }
+    .search-panel { background: #f8f9fa; padding: 20px; border-radius: 10px; }
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; margin-bottom: 8px; font-weight: 600; }
+    .form-group input, .form-group select { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; }
+    .btn { width: 100%; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: 600; cursor: pointer; }
+    .btn-small { padding: 8px 16px; font-size: 14px; width: auto; margin: 5px; }
+    .btn-message { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .profile-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    .profile-card { background: white; border: 2px solid #e0e0e0; border-radius: 12px; padding: 20px; position: relative; }
+    .profile-card.is-me { border-color: #4caf50; background: #f1f8f4; }
+    .me-badge { position: absolute; top: 10px; left: 10px; background: #4caf50; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px; }
+    .avatar { width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold; margin-right: 15px; }
+    .profile-header { display: flex; align-items: center; margin-bottom: 15px; }
+    .profile-info h3 { font-size: 1.3em; margin-bottom: 5px; }
+    .profile-meta { color: #666; font-size: 0.9em; }
+    .profile-bio { color: #555; margin: 10px 0; padding-top: 10px; border-top: 1px solid #e0e0e0; }
+    .profile-actions { display: flex; gap: 10px; margin-top: 15px; }
+    .loading { text-align: center; padding: 40px; color: #666; }
+    .result-header { display: flex; justify-content: space-between; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #e0e0e0; }
+    .result-count { background: #667eea; color: white; padding: 5px 15px; border-radius: 20px; }
+    .error { background: #f44336; color: white; padding: 20px; border-radius: 10px; margin: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>💑 MLMMP</h1>
+      <p>マッチング検索システム</p>
+      <div class="current-user" id="user">👤 読み込み中...</div>
+    </div>
+    
+    <div class="admin">
+      <div>
+        <label>🔧 ログインユーザー: <select id="userSelect" onchange="changeUser()"><option>選択してください</option></select></label>
+      </div>
+      <a href="chat.html" class="chat-link">💬 チャット画面</a>
+    </div>
+    
+    <div class="content">
+      <div class="search-panel">
+        <h2 style="margin-bottom: 20px;">🔍 検索条件</h2>
+        <form id="form">
+          <div class="form-group"><label>年齢（下限）</label><input type="number" id="ageMin" placeholder="25"></div>
+          <div class="form-group"><label>年齢（上限）</label><input type="number" id="ageMax" placeholder="35"></div>
+          <div class="form-group"><label>性別</label><select id="gender"><option value="">すべて</option><option value="male">男性</option><option value="female">女性</option></select></div>
+          <div class="form-group"><label>国</label><select id="country"><option value="">すべて</option><option value="JP">日本</option><option value="US">アメリカ</option></select></div>
+          <button type="submit" class="btn">検索する</button>
+        </form>
+      </div>
+      
+      <div>
+        <div class="result-header"><h2>検索結果</h2><span class="result-count" id="count">0件</span></div>
+        <div id="results" class="profile-grid"><div class="loading">ログインユーザーを選択してください</div></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = 'https://silver-space-cod-w6xr46r4q4r39675-3002.app.github.dev/api';
+    let userId = null, userName = '', allUsers = [];
+    
+    async function init() {
+      try {
+        console.log('API URL:', API);
+        const res = await fetch(API + '/profiles');
+        console.log('Response status:', res.status);
+        
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        
+        const data = await res.json();
+        console.log('Data:', data);
+        
+        if (!data.success) throw new Error('API返却失敗');
+        if (!data.data || data.data.length === 0) throw new Error('データが0件です');
+        
+        allUsers = data.data;
+        const sel = document.getElementById('userSelect');
+        sel.innerHTML = '<option value="">選択してください</option>' + 
+          data.data.map(u => `<option value="${u.id}">${u.name} (${u.age}歳)</option>`).join('');
+        
+        const saved = localStorage.getItem('userId');
+        if (saved && allUsers.find(u => u.id === saved)) {
+          userId = saved;
+          userName = localStorage.getItem('userName');
+          sel.value = userId;
+        } else {
+          userId = data.data[0].id;
+          userName = data.data[0].name;
+          sel.value = userId;
+          localStorage.setItem('userId', userId);
+          localStorage.setItem('userName', userName);
+        }
+        
+        document.getElementById('user').textContent = '👤 ' + userName;
+        search({});
+      } catch (e) {
+        console.error('初期化エラー:', e);
+        document.getElementById('results').innerHTML = 
+          '<div class="error"><h3>❌ エラー</h3><p>' + e.message + 
+          '</p><p>API URL: ' + API + '</p><p>F12でConsole確認</p></div>';
+      }
+    }
+    
+    function changeUser() {
+      const sel = document.getElementById('userSelect');
+      const u = allUsers.find(p => p.id === sel.value);
+      if (u) {
+        userId = u.id;
+        userName = u.name;
+        document.getElementById('user').textContent = '👤 ' + userName;
+        localStorage.setItem('userId', userId);
+        localStorage.setItem('userName', userName);
+        search({});
+      }
+    }
+    
+    document.getElementById('form').addEventListener('submit', e => {
+      e.preventDefault();
+      const params = {};
+      const min = document.getElementById('ageMin').value;
+      const max = document.getElementById('ageMax').value;
+      const g = document.getElementById('gender').value;
+      const c = document.getElementById('country').value;
+      if (min) params.ageMin = parseInt(min);
+      if (max) params.ageMax = parseInt(max);
+      if (g) params.gender = g;
+      if (c) params.country = c;
+      search(params);
+    });
+    
+    async function search(params) {
+      document.getElementById('results').innerHTML = '<div class="loading">検索中...</div>';
+      try {
+        const res = await fetch(API + '/profiles/search', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(params)
+        });
+        const data = await res.json();
+        display(data.data, data.count);
+      } catch (e) {
+        document.getElementById('results').innerHTML = '<div class="error">検索エラー: ' + e.message + '</div>';
+      }
+    }
+    
+    function display(profiles, count) {
+      document.getElementById('count').textContent = count + '件';
+      if (!profiles || !profiles.length) {
+        document.getElementById('results').innerHTML = '<div class="loading">該当なし</div>';
+        return;
+      }
+      
+      document.getElementById('results').innerHTML = profiles.map(p => {
+        const isMe = p.id === userId;
+        return `<div class="profile-card ${isMe ? 'is-me' : ''}">
+          ${isMe ? '<div class="me-badge">👤 自分</div>' : ''}
+          <div class="profile-header">
+            <div class="avatar">${p.name.charAt(0)}</div>
+            <div class="profile-info">
+              <h3>${p.name}</h3>
+              <div class="profile-meta">${p.age}歳 · ${p.gender === 'male' ? '男性' : '女性'} · ${p.city || p.country}</div>
+            </div>
+          </div>
+          ${p.bio ? `<div class="profile-bio">${p.bio}</div>` : ''}
+          <div class="profile-actions">
+            ${!isMe ? `<button class="btn btn-small btn-message" onclick="openChat('${p.id}','${p.name}')">💬 メッセージ</button>` : ''}
+          </div>
+        </div>`;
+      }).join('');
+    }
+    
+    function openChat(id, name) {
+      localStorage.setItem('chatId', id);
+      localStorage.setItem('chatName', name);
+      window.location.href = 'chat.html';
+    }
+    
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>

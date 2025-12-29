@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: mlmmp-postgres
+    environment:
+      POSTGRES_USER: mlmmp_user
+      POSTGRES_PASSWORD: mlmmp_password_dev_2024
+      POSTGRES_DB: mlmmp
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/postgres:/docker-entrypoint-initdb.d
+    networks:
+      - mlmmp-network
+
+  mongodb:
+    image: mongo:7
+    container_name: mlmmp-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mlmmp_user
+      MONGO_INITDB_ROOT_PASSWORD: mlmmp_password_dev_2024
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - mlmmp-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: mlmmp-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - mlmmp-network
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  redis_data:
+
+networks:
+  mlmmp-network:
+    driver: bridge

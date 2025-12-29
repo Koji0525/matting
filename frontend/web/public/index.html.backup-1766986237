@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MLMMP - マッチング検索</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+      position: relative;
+    }
+    .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+    .header p { font-size: 1.2em; opacity: 0.9; }
+    .current-user {
+      position: absolute;
+      top: 15px;
+      right: 30px;
+      background: rgba(255,255,255,0.2);
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 0.9em;
+    }
+    .user-selector {
+      background: #f8f9fa;
+      padding: 15px 30px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    .user-selector label {
+      margin-right: 15px;
+      font-weight: 600;
+      color: #333;
+    }
+    .user-selector select {
+      padding: 8px 15px;
+      border: 2px solid #667eea;
+      border-radius: 8px;
+      font-size: 16px;
+      background: white;
+      cursor: pointer;
+    }
+    .content {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 20px;
+      padding: 30px;
+    }
+    .search-panel {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    .form-group { margin-bottom: 20px; }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+    .form-group input:focus, .form-group select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .btn {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-small {
+      padding: 8px 16px;
+      font-size: 14px;
+      width: auto;
+      margin: 5px;
+    }
+    .btn-like {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    .btn-message {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    .btn-inbox {
+      background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+    .results { background: white; }
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    .result-count {
+      background: #667eea;
+      color: white;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    .profile-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .profile-card {
+      background: white;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.3s;
+      position: relative;
+    }
+    .profile-card.is-me {
+      border-color: #4caf50;
+      background: #f1f8f4;
+    }
+    .profile-card:hover {
+      border-color: #667eea;
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+      transform: translateY(-5px);
+    }
+    .me-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: #4caf50;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 15px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .profile-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .avatar {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
+      margin-right: 15px;
+    }
+    .profile-info h3 {
+      font-size: 1.3em;
+      color: #333;
+      margin-bottom: 5px;
+    }
+    .profile-meta {
+      color: #666;
+      font-size: 0.9em;
+    }
+    .profile-bio {
+      color: #555;
+      line-height: 1.6;
+      margin: 10px 0;
+      padding-top: 10px;
+      border-top: 1px solid #e0e0e0;
+    }
+    .profile-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+    .notification-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #f5576c;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 15px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #4caf50;
+      color: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 1000;
+      animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(400px); }
+      to { transform: translateX(0); }
+    }
+    
+    /* モーダル */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+    .modal-content {
+      background-color: white;
+      margin: 5% auto;
+      padding: 30px;
+      border-radius: 15px;
+      width: 80%;
+      max-width: 700px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    .modal-header h2 {
+      color: #333;
+      font-size: 1.8em;
+    }
+    .close {
+      color: #aaa;
+      font-size: 35px;
+      font-weight: bold;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .close:hover { color: #000; }
+    .message-item, .like-item {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      border-left: 4px solid #667eea;
+    }
+    .message-item h4, .like-item h4 {
+      color: #667eea;
+      margin-bottom: 8px;
+    }
+    .message-item p {
+      color: #555;
+      line-height: 1.6;
+    }
+    .message-time, .like-time {
+      color: #999;
+      font-size: 0.85em;
+      margin-top: 8px;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+    
+    /* デバッグパネル */
+    .debug-panel {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      padding: 15px;
+      z-index: 998;
+    }
+    .debug-toggle {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .debug-content {
+      display: none;
+      max-width: 400px;
+      max-height: 500px;
+      overflow-y: auto;
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 2px solid #e0e0e0;
+    }
+    .debug-item {
+      background: #f8f9fa;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      font-size: 0.9em;
+    }
+    
+    @media (max-width: 768px) {
+      .content { grid-template-columns: 1fr; }
+      .profile-grid { grid-template-columns: 1fr; }
+      .modal-content { width: 95%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>💑 MLMMP</h1>
+      <p>マッチング検索システム</p>
+      <div class="current-user" id="currentUserDisplay">👤 読み込み中...</div>
+    </div>
+    
+    <div class="user-selector">
+      <label for="currentUserSelect">👤 ログインユーザー:</label>
+      <select id="currentUserSelect" onchange="changeCurrentUser()">
+        <option value="">選択してください</option>
+      </select>
+    </div>
+    
+    <div class="content">
+      <div class="search-panel">
+        <h2 style="margin-bottom: 20px; color: #333;">🔍 検索条件</h2>
+        
+        <form id="searchForm">
+          <div class="form-group">
+            <label>年齢（下限）</label>
+            <input type="number" id="ageMin" min="18" max="100" placeholder="例: 25">
+          </div>
+          
+          <div class="form-group">
+            <label>年齢（上限）</label>
+            <input type="number" id="ageMax" min="18" max="100" placeholder="例: 35">
+          </div>
+          
+          <div class="form-group">
+            <label>性別</label>
+            <select id="gender">
+              <option value="">すべて</option>
+              <option value="male">男性</option>
+              <option value="female">女性</option>
+              <option value="other">その他</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>国</label>
+            <select id="country">
+              <option value="">すべて</option>
+              <option value="JP">日本</option>
+              <option value="US">アメリカ</option>
+              <option value="UZ">ウズベキスタン</option>
+            </select>
+          </div>
+          
+          <button type="submit" class="btn">検索する</button>
+        </form>
+      </div>
+      
+      <div class="results">
+        <div class="result-header">
+          <h2>検索結果</h2>
+          <span class="result-count" id="resultCount">0件</span>
+        </div>
+        
+        <div id="resultsContainer" class="profile-grid">
+          <div class="loading">条件を入力して検索してください</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 受信ボックスモーダル -->
+  <div id="inboxModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="inboxTitle">📬 受信ボックス</h2>
+        <span class="close" onclick="closeInbox()">&times;</span>
+      </div>
+      <div id="inboxContent"></div>
+    </div>
+  </div>
+
+  <!-- デバッグパネル -->
+  <div class="debug-panel">
+    <button class="debug-toggle" onclick="toggleDebug()">🔧 デバッグ</button>
+    <div class="debug-content" id="debugContent"></div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin.replace('-8000', '-3002') + '/api';
+    let MY_PROFILE_ID = null;
+    let MY_PROFILE_NAME = '';
+    let allProfiles = [];
+    
+    function showNotification(message) {
+      const notification = document.createElement('div');
+      notification.className = 'notification';
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 3000);
+    }
+    
+    // ユーザー選択時
+    function changeCurrentUser() {
+      const select = document.getElementById('currentUserSelect');
+      const selectedProfile = allProfiles.find(p => p.id === select.value);
+      
+      if (selectedProfile) {
+        MY_PROFILE_ID = selectedProfile.id;
+        MY_PROFILE_NAME = selectedProfile.name;
+        document.getElementById('currentUserDisplay').textContent = `👤 ${MY_PROFILE_NAME}としてログイン中`;
+        
+        // 検索結果を再表示（自分のカードをハイライト）
+        searchProfiles({});
+      }
+    }
+    
+    // 初期化：全プロフィール取得してユーザー選択肢を作成
+    async function initializeApp() {
+      try {
+        const response = await fetch(`${API_BASE}/profiles`);
+        const data = await response.json();
+        
+        if (data.success && data.data.length > 0) {
+          allProfiles = data.data;
+          
+          // ユーザー選択肢を作成
+          const select = document.getElementById('currentUserSelect');
+          select.innerHTML = data.data.map(profile => 
+            `<option value="${profile.id}">${profile.name} (${profile.age}歳・${profile.city || profile.country})</option>`
+          ).join('');
+          
+          // デフォルトで最初のユーザー（太郎）を選択
+          MY_PROFILE_ID = data.data[0].id;
+          MY_PROFILE_NAME = data.data[0].name;
+          select.value = MY_PROFILE_ID;
+          document.getElementById('currentUserDisplay').textContent = `👤 ${MY_PROFILE_NAME}としてログイン中`;
+          
+          // 初回検索
+          await searchProfiles({});
+        } else {
+          showNotification('❌ プロフィールデータが見つかりません');
+        }
+      } catch (error) {
+        console.error('初期化エラー:', error);
+        showNotification('❌ アプリの初期化に失敗しました');
+      }
+    }
+    
+    document.getElementById('searchForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const ageMin = document.getElementById('ageMin').value;
+      const ageMax = document.getElementById('ageMax').value;
+      const gender = document.getElementById('gender').value;
+      const country = document.getElementById('country').value;
+      
+      const searchParams = {};
+      if (ageMin) searchParams.ageMin = parseInt(ageMin);
+      if (ageMax) searchParams.ageMax = parseInt(ageMax);
+      if (gender) searchParams.gender = gender;
+      if (country) searchParams.country = country;
+      
+      await searchProfiles(searchParams);
+    });
+    
+    async function searchProfiles(params) {
+      const resultsContainer = document.getElementById('resultsContainer');
+      resultsContainer.innerHTML = '<div class="loading">検索中...</div>';
+      
+      try {
+        const response = await fetch(`${API_BASE}/profiles/search`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(params),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          await displayResults(data.data, data.count);
+        } else {
+          resultsContainer.innerHTML = '<div class="loading">検索に失敗しました</div>';
+        }
+      } catch (error) {
+        console.error('検索エラー:', error);
+        resultsContainer.innerHTML = '<div class="loading">サーバーに接続できません</div>';
+      }
+    }
+    
+    async function sendLike(toProfileId) {
+      if (!MY_PROFILE_ID) {
+        showNotification('❌ ユーザーを選択してください');
+        return;
+      }
+      
+      if (MY_PROFILE_ID === toProfileId) {
+        showNotification('❌ 自分にいいねはできません');
+        return;
+      }
+      
+      try {
+        const response = await fetch(`${API_BASE}/likes`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fromProfileId: MY_PROFILE_ID,
+            toProfileId: toProfileId,
+          }),
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+          showNotification('💕 いいねを送りました！');
+          await searchProfiles({});
+        } else {
+          showNotification('❌ ' + data.error);
+        }
+      } catch (error) {
+        console.error('いいねエラー:', error);
+        showNotification('❌ エラーが発生しました');
+      }
+    }
+    
+    async function sendMessage(toProfileId, profileName) {
+      if (!MY_PROFILE_ID) {
+        showNotification('❌ ユーザーを選択してください');
+        return;
+      }
+      
+      if (MY_PROFILE_ID === toProfileId) {
+        showNotification('❌ 自分にメッセージは送れません');
+        return;
+      }
+      
+      const message = prompt(`${profileName}さんにメッセージを送信:`);
+      if (!message) return;
+      
+      try {
+        const response = await fetch(`${API_BASE}/messages`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fromProfileId: MY_PROFILE_ID,
+            toProfileId: toProfileId,
+            message: message,
+          }),
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+          showNotification('✉️ メッセージを送りました！');
+          await searchProfiles({});
+        } else {
+          showNotification('❌ ' + data.error);
+        }
+      } catch (error) {
+        console.error('メッセージエラー:', error);
+        showNotification('❌ エラーが発生しました');
+      }
+    }
+    
+    async function showInbox(profileId, profileName) {
+      const modal = document.getElementById('inboxModal');
+      const title = document.getElementById('inboxTitle');
+      const content = document.getElementById('inboxContent');
+      
+      title.textContent = `📬 ${profileName}さんの受信ボックス`;
+      content.innerHTML = '<div class="loading">読み込み中...</div>';
+      modal.style.display = 'block';
+      
+      try {
+        const [messagesRes, likesRes] = await Promise.all([
+          fetch(`${API_BASE}/messages/${profileId}`),
+          fetch(`${API_BASE}/likes/${profileId}`)
+        ]);
+        
+        const messagesData = await messagesRes.json();
+        const likesData = await likesRes.json();
+        
+        let html = '';
+        
+        html += '<h3 style="color: #667eea; margin-bottom: 15px;">💬 受信メッセージ</h3>';
+        
+        const receivedMessages = messagesData.data.filter(m => m.toProfileId === profileId);
+        
+        if (receivedMessages.length > 0) {
+          html += receivedMessages.map(msg => `
+            <div class="message-item">
+              <h4>From: ${msg.fromProfile ? msg.fromProfile.name : '不明'}</h4>
+              <p>${msg.message}</p>
+              <div class="message-time">${new Date(msg.created_at).toLocaleString('ja-JP')}</div>
+            </div>
+          `).join('');
+        } else {
+          html += '<div class="empty-state">まだメッセージはありません</div>';
+        }
+        
+        html += '<h3 style="color: #f5576c; margin: 30px 0 15px;">💕 受信いいね</h3>';
+        
+        if (likesData.data.length > 0) {
+          html += likesData.data.map(like => `
+            <div class="like-item">
+              <h4>💕 ${like.fromProfile ? like.fromProfile.name : '不明'}さんからいいね！</h4>
+              <div class="like-time">${new Date(like.created_at).toLocaleString('ja-JP')}</div>
+            </div>
+          `).join('');
+        } else {
+          html += '<div class="empty-state">まだいいねはありません</div>';
+        }
+        
+        content.innerHTML = html;
+      } catch (error) {
+        console.error('受信ボックスエラー:', error);
+        content.innerHTML = '<div class="empty-state">読み込みに失敗しました</div>';
+      }
+    }
+    
+    function closeInbox() {
+      document.getElementById('inboxModal').style.display = 'none';
+    }
+    
+    async function displayResults(profiles, count) {
+      const resultsContainer = document.getElementById('resultsContainer');
+      const countElement = document.getElementById('resultCount');
+      
+      countElement.textContent = `${count}件`;
+      
+      if (profiles.length === 0) {
+        resultsContainer.innerHTML = '<div class="loading">該当する人が見つかりませんでした</div>';
+        return;
+      }
+      
+      const profilesWithCounts = await Promise.all(profiles.map(async (profile) => {
+        try {
+          const [messagesRes, likesRes] = await Promise.all([
+            fetch(`${API_BASE}/messages/${profile.id}`),
+            fetch(`${API_BASE}/likes/${profile.id}`)
+          ]);
+          
+          const messagesData = await messagesRes.json();
+          const likesData = await likesRes.json();
+          
+          const receivedMessages = messagesData.data.filter(m => m.toProfileId === profile.id).length;
+          const receivedLikes = likesData.data.length;
+          
+          return { ...profile, receivedMessages, receivedLikes };
+        } catch (error) {
+          console.error('カウント取得エラー:', error);
+          return { ...profile, receivedMessages: 0, receivedLikes: 0 };
+        }
+      }));
+      
+      resultsContainer.innerHTML = profilesWithCounts.map(profile => {
+        const isMe = profile.id === MY_PROFILE_ID;
+        return `
+        <div class="profile-card ${isMe ? 'is-me' : ''}">
+          ${isMe ? '<div class="me-badge">👤 自分</div>' : ''}
+          ${(profile.receivedMessages > 0 || profile.receivedLikes > 0) && !isMe ? 
+            `<div class="notification-badge">
+              ${profile.receivedMessages > 0 ? `💬 ${profile.receivedMessages}` : ''}
+              ${profile.receivedLikes > 0 ? `💕 ${profile.receivedLikes}` : ''}
+            </div>` : ''}
+          <div class="profile-header">
+            <div class="avatar">${profile.name.charAt(0)}</div>
+            <div class="profile-info">
+              <h3>${profile.name}</h3>
+              <div class="profile-meta">
+                ${profile.age}歳 · ${profile.gender === 'male' ? '男性' : profile.gender === 'female' ? '女性' : 'その他'} · ${profile.city || profile.country}
+              </div>
+            </div>
+          </div>
+          ${profile.bio ? `<div class="profile-bio">${profile.bio}</div>` : ''}
+          <div class="profile-actions">
+            ${!isMe ? `
+              <button class="btn btn-small btn-like" onclick="sendLike('${profile.id}')">
+                💕 いいね
+              </button>
+              <button class="btn btn-small btn-message" onclick="sendMessage('${profile.id}', '${profile.name}')">
+                ✉️ メッセージ
+              </button>
+            ` : ''}
+            <button class="btn btn-small btn-inbox" onclick="showInbox('${profile.id}', '${profile.name}')">
+              📬 受信BOX (${profile.receivedMessages + profile.receivedLikes})
+            </button>
+          </div>
+        </div>
+      `}).join('');
+    }
+    
+    async function toggleDebug() {
+      const debugContent = document.getElementById('debugContent');
+      
+      if (debugContent.style.display === 'block') {
+        debugContent.style.display = 'none';
+        return;
+      }
+      
+      debugContent.innerHTML = '<div class="loading">読み込み中...</div>';
+      debugContent.style.display = 'block';
+      
+      try {
+        const profilesRes = await fetch(`${API_BASE}/profiles`);
+        const profilesData = await profilesRes.json();
+        
+        let html = '<h3 style="color: #667eea; margin-bottom: 10px;">🔍 デバッグ情報</h3>';
+        
+        for (const profile of profilesData.data) {
+          const [messagesRes, likesRes] = await Promise.all([
+            fetch(`${API_BASE}/messages/${profile.id}`),
+            fetch(`${API_BASE}/likes/${profile.id}`)
+          ]);
+          
+          const messagesData = await messagesRes.json();
+          const likesData = await likesRes.json();
+          
+          const receivedMessages = messagesData.data.filter(m => m.toProfileId === profile.id);
+          
+          html += `
+            <div class="debug-item">
+              <strong>${profile.name}</strong> (ID: ${profile.id.substring(0, 8)}...)<br>
+              💬 受信メッセージ: ${receivedMessages.length}件<br>
+              💕 受信いいね: ${likesData.data.length}件
+            </div>
+          `;
+        }
+        
+        debugContent.innerHTML = html;
+      } catch (error) {
+        console.error('デバッグエラー:', error);
+        debugContent.innerHTML = '<div class="empty-state">読み込みエラー</div>';
+      }
+    }
+    
+    window.onclick = function(event) {
+      const modal = document.getElementById('inboxModal');
+      if (event.target == modal) {
+        closeInbox();
+      }
+    }
+    
+    // ページ読み込み時に初期化
+    window.addEventListener('load', initializeApp);
+  </script>
+</body>
+</html>
