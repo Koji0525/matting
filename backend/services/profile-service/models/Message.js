@@ -22,6 +22,11 @@ module.exports = (sequelize, DataTypes) => {
     read: {
       type: DataTypes.BOOLEAN,
       defaultValue: false
+    },
+    folder: {
+      type: DataTypes.ENUM('inbox', 'important', 'favorite', 'archive'),
+      defaultValue: 'inbox',
+      comment: 'メッセージフォルダ'
     }
   }, {
     tableName: 'messages',

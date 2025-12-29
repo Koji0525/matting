@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>いいね受信箱 - MLMMP</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 20px; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+    h1 { color: #2c5282; }
+    .actions { display: flex; gap: 10px; }
+    .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+    .btn-secondary { background: #e2e8f0; color: #2c5282; }
+    .btn-secondary:hover { background: #cbd5e0; }
+    .btn-primary { background: #2c5282; color: white; }
+    .btn-primary:hover { background: #1a365d; }
+    
+    .likes-list { background: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .like-item { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid #e2e8f0; }
+    .like-item:last-child { border-bottom: none; }
+    .like-item.unread { background: #f0f9ff; }
+    .like-info { flex: 1; }
+    .like-name { font-size: 20px; font-weight: 700; color: #2c5282; margin-bottom: 5px; }
+    .like-details { color: #666; font-size: 14px; }
+    .like-time { color: #999; font-size: 13px; margin-top: 5px; }
+    .like-badge { display: inline-block; background: #e53e3e; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-left: 10px; }
+    .like-actions { display: flex; gap: 10px; }
+    
+    .empty { text-align: center; padding: 60px; color: #999; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>💌 いいね受信箱</h1>
+      <div class="actions">
+        <button class="btn btn-primary" onclick="markAllAsRead()">全て既読にする</button>
+        <button class="btn btn-secondary" onclick="window.location.href='index.html'">← 検索画面に戻る</button>
+      </div>
+    </div>
+    
+    <div class="likes-list" id="likesList"></div>
+  </div>
+
+  <script>
+    const API = 'https://silver-space-cod-w6xr46r4q4r39675-3002.app.github.dev/api';
+    const userId = localStorage.getItem('userId');
+    
+    let allLikes = [];
+    
+    async function loadLikes() {
+      if (!userId) {
+        document.getElementById('likesList').innerHTML = '<div class="empty">ログインしてください</div>';
+        return;
+      }
+      
+      try {
+        const res = await fetch(API + '/likes/' + userId);
+        const data = await res.json();
+        
+        if (!data.success || data.data.length === 0) {
+          document.getElementById('likesList').innerHTML = '<div class="empty">まだいいねがありません</div>';
+          return;
+        }
+        
+        allLikes = data.data;
+        
+        const html = allLikes.map(like => {
+          const time = new Date(like.createdAt).toLocaleString('ja-JP');
+          const unreadBadge = !like.read ? '<span class="like-badge">未読</span>' : '';
+          const unreadClass = !like.read ? 'unread' : '';
+          
+          return `<div class="like-item ${unreadClass}">
+            <div class="like-info">
+              <div class="like-name">${like.fromProfile.name}${unreadBadge}</div>
+              <div class="like-details">${like.fromProfile.age}歳 / ${like.fromProfile.city || '未設定'}</div>
+              <div class="like-time">${time}</div>
+            </div>
+            <div class="like-actions">
+              <button class="btn btn-primary" onclick="openChat('${like.fromProfile.id}', '${like.fromProfile.name}')">💬 メッセージ</button>
+              <button class="btn btn-secondary" onclick="likeBack('${like.fromProfile.id}')">❤️ いいね返し</button>
+            </div>
+          </div>`;
+        }).join('');
+        
+        document.getElementById('likesList').innerHTML = html;
+        
+        // 未読いいねを自動既読処理
+        const unreadLikeIds = allLikes.filter(l => !l.read).map(l => l.id);
+        if (unreadLikeIds.length > 0) {
+          await markLikesAsRead(unreadLikeIds);
+        }
+      } catch (e) {
+        console.error(e);
+        document.getElementById('likesList').innerHTML = '<div class="empty">エラー: ' + e.message + '</div>';
+      }
+    }
+    
+    async function markLikesAsRead(likeIds) {
+      try {
+        for (const likeId of likeIds) {
+          await fetch(API + '/likes/' + likeId + '/read', {
+            method: 'PATCH'
+          });
+        }
+        console.log('いいね既読処理完了:', likeIds.length, '件');
+      } catch (e) {
+        console.error('いいね既読処理エラー:', e);
+      }
+    }
+    
+    async function markAllAsRead() {
+      try {
+        const res = await fetch(API + '/likes/' + userId + '/mark-all-read', {
+          method: 'POST'
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          alert('✅ 全て既読にしました');
+          loadLikes();
+        }
+      } catch (e) {
+        alert('エラー: ' + e.message);
+      }
+    }
+    
+    async function likeBack(toId) {
+      try {
+        const res = await fetch(API + '/likes', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({fromProfileId: userId, toProfileId: toId})
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('❤️ いいねを返しました！');
+        }
+      } catch (e) {
+        alert('エラー: ' + e.message);
+      }
+    }
+    
+    function openChat(id, name) {
+      localStorage.setItem('chatId', id);
+      localStorage.setItem('chatName', name);
+      window.location.href = 'chat.html';
+    }
+    
+    window.addEventListener('load', loadLikes);
+  </script>
+</body>
+</html>

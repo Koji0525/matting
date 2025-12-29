@@ -3,208 +3,155 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MLMMP チャット</title>
+  <title>チャット - MLMMP</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: sans-serif; background: #0e1621; color: #fff; height: 100vh; overflow: hidden; }
-    .app { display: grid; grid-template-columns: 300px 1fr; height: 100vh; }
-    .sidebar { background: #17212b; border-right: 1px solid #2b5278; display: flex; flex-direction: column; }
-    .sidebar-header { padding: 20px; border-bottom: 1px solid #2b5278; }
-    .back { display: inline-block; margin-bottom: 15px; color: white; text-decoration: none; background: #2b5278; padding: 8px 15px; border-radius: 5px; }
-    .sel { width: 100%; padding: 10px; background: #2b5278; color: white; border: none; border-radius: 5px; }
-    .list { flex: 1; overflow-y: auto; }
-    .sect { padding: 10px 20px; font-size: 12px; color: #aaa; background: #0e1621; border-bottom: 1px solid #2b5278; }
-    .item { padding: 15px 20px; border-bottom: 1px solid #2b5278; cursor: pointer; }
-    .item:hover { background: #232e3c; }
-    .item.active { background: #2b5278; }
-    .name { font-weight: 600; margin-bottom: 5px; }
-    .prev { font-size: 13px; color: #aaa; }
-    .chat { display: flex; flex-direction: column; background: #0e1621; height: 100vh; }
-    .hdr { padding: 15px 20px; background: #17212b; border-bottom: 1px solid #2b5278; font-weight: 600; flex-shrink: 0; }
+    body { font-family: sans-serif; background: #0d1117; color: #c9d1d9; height: 100vh; overflow: hidden; }
+    
+    .chat-area { display: flex; flex-direction: column; height: 100vh; }
+    .header { background: #161b22; padding: 20px; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; }
+    .header h2 { color: #58a6ff; }
+    .back-btn { padding: 10px 20px; background: #21262d; color: #58a6ff; border: 1px solid #30363d; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    .back-btn:hover { background: #30363d; }
+    
     .msgs { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; min-height: 0; }
-    .m-list { display: flex; flex-direction: column; gap: 10px; }
-    .m { display: flex; gap: 8px; }
-    .m.sent { flex-direction: row-reverse; }
-    .m-bub { max-width: 65%; padding: 10px 14px; border-radius: 14px; line-height: 1.4; }
-    .m.received .m-bub { background: #182533; border-bottom-left-radius: 4px; }
-    .m.sent .m-bub { background: #2b5278; border-bottom-right-radius: 4px; }
-    .m-time { font-size: 11px; color: #999; margin-top: 4px; }
-    .inp { padding: 15px 20px; background: #17212b; border-top: 1px solid #2b5278; display: flex; gap: 10px; flex-shrink: 0; }
-    .inp input { flex: 1; padding: 12px 16px; background: #0e1621; border: 1px solid #2b5278; border-radius: 24px; color: white; outline: none; }
-    .inp button { padding: 12px 24px; background: #2b5278; border: none; border-radius: 24px; color: white; cursor: pointer; }
-    .emp { display: flex; align-items: center; justify-content: center; height: 100%; color: #666; flex-direction: column; gap: 10px; }
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-thumb { background: #2b5278; border-radius: 4px; }
+    .msg { max-width: 70%; margin-bottom: 15px; padding: 12px 16px; border-radius: 18px; word-wrap: break-word; }
+    .msg.me { align-self: flex-end; background: #238636; color: white; }
+    .msg.other { align-self: flex-start; background: #21262d; color: #c9d1d9; }
+    .msg-time { font-size: 11px; opacity: 0.6; margin-top: 4px; }
+    
+    .inp { flex-shrink: 0; padding: 20px; background: #161b22; border-top: 1px solid #30363d; display: flex; gap: 10px; }
+    .inp input { flex: 1; padding: 12px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #c9d1d9; font-size: 14px; }
+    .inp button { padding: 12px 24px; background: #238636; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    .inp button:hover { background: #2ea043; }
   </style>
 </head>
 <body>
-  <div class="app">
-    <div class="sidebar">
-      <div class="sidebar-header">
-        <a href="index.html" class="back">← 検索に戻る</a>
-        <h2 style="margin-bottom: 15px;">💬 チャット</h2>
-        <select class="sel" id="s" onchange="chgU()"><option>選択...</option></select>
-      </div>
-      <div class="list" id="l"></div>
+  <div class="chat-area">
+    <div class="header">
+      <h2 id="chatName">チャット</h2>
+      <button class="back-btn" onclick="window.location.href='index.html'">← 戻る</button>
     </div>
-    <div class="chat">
-      <div class="hdr" id="h">相手を選択</div>
-      <div class="msgs" id="ms"><div class="emp"><div style="font-size:48px;">💬</div><div>相手を選択</div></div></div>
-      <div class="inp" id="i" style="display:none;">
-        <input type="text" id="t" placeholder="メッセージ..." onkeypress="if(event.key==='Enter')snd()">
-        <button onclick="snd()">送信</button>
-      </div>
+    <div class="msgs" id="msgs"></div>
+    <div class="inp">
+      <input type="text" id="msgInput" placeholder="メッセージを入力..." onkeypress="if(event.key==='Enter') send()">
+      <button onclick="send()">送信</button>
     </div>
   </div>
+
   <script>
     const API = 'https://silver-space-cod-w6xr46r4q4r39675-3002.app.github.dev/api';
-    let uid, us = [], pid, tmr;
+    const userId = localStorage.getItem('userId');
+    const chatId = localStorage.getItem('chatId');
+    const chatName = localStorage.getItem('chatName');
     
-    async function init() {
+    if (!userId || !chatId) {
+      alert('ログインしてください');
+      window.location.href = 'index.html';
+    }
+    
+    document.getElementById('chatName').textContent = chatName + ' とのチャット';
+    
+    let unreadMessageIds = [];
+    
+    async function load() {
       try {
-        const r = await fetch(API + '/profiles');
-        const d = await r.json();
-        if (!d.success) return;
-        us = d.data;
-        const s = document.getElementById('s');
-        s.innerHTML = '<option>選択...</option>' + d.data.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
-        const sv = localStorage.getItem('userId');
-        if (sv && us.find(u => u.id === sv)) {
-          uid = sv;
-          s.value = uid;
-          ldL();
-          const ci = localStorage.getItem('chatId');
-          const cn = localStorage.getItem('chatName');
-          if (ci && cn) {
-            setTimeout(() => { opn(ci, cn); localStorage.removeItem('chatId'); localStorage.removeItem('chatName'); }, 500);
-          }
-        }
-      } catch (e) { console.error(e); }
-    }
-    
-    function chgU() {
-      const s = document.getElementById('s');
-      const u = us.find(p => p.id === s.value);
-      if (!u) return;
-      uid = u.id;
-      localStorage.setItem('userId', uid);
-      localStorage.setItem('userName', u.name);
-      pid = null;
-      document.getElementById('h').textContent = '相手を選択';
-      document.getElementById('ms').innerHTML = '<div class="emp"><div style="font-size:48px;">💬</div></div>';
-      document.getElementById('i').style.display = 'none';
-      if (tmr) { clearInterval(tmr); tmr = null; }
-      ldL();
-    }
-    
-    async function ldL() {
-      if (!uid) return;
-      const l = document.getElementById('l');
-      l.innerHTML = '<div class="emp">読み込み中...</div>';
-      try {
-        const r = await fetch(API + '/messages/' + uid);
-        const d = await r.json();
-        if (!d.success) return;
-        const ch = new Map();
-        d.data.forEach(m => {
-          if (!m.fromProfile || !m.toProfile) return;
-          const p = m.fromProfileId === uid ? m.toProfileId : m.fromProfileId;
-          const pf = m.fromProfileId === uid ? m.toProfile : m.fromProfile;
-          if (!ch.has(p)) ch.set(p, { id: p, name: pf.name, msg: m.message });
-        });
-        const cU = us.filter(u => u.id !== uid && ch.has(u.id));
-        const nU = us.filter(u => u.id !== uid && !ch.has(u.id));
-        let h = '';
-        if (cU.length > 0) {
-          h += '<div class="sect">💬 チャット中</div>';
-          h += cU.map(u => {
-            const i = ch.get(u.id);
-            return `<div class="item" onclick="opn('${u.id}','${u.name}')"><div class="name">${u.name}</div><div class="prev">${i.msg.substring(0,30)}...</div></div>`;
-          }).join('');
-        }
-        if (nU.length > 0) {
-          h += '<div class="sect">👤 全ユーザー</div>';
-          h += nU.map(u => `<div class="item" onclick="opn('${u.id}','${u.name}')"><div class="name">${u.name}</div><div class="prev">チャット開始</div></div>`).join('');
-        }
-        l.innerHTML = h || '<div class="emp">なし</div>';
-      } catch (e) { console.error(e); }
-    }
-    
-    function opn(id, nm) {
-      pid = id;
-      document.querySelectorAll('.item').forEach(i => i.classList.remove('active'));
-      if (event && event.target) event.target.closest('.item').classList.add('active');
-      document.getElementById('h').textContent = '💬 ' + nm;
-      document.getElementById('i').style.display = 'flex';
-      ld();
-      if (tmr) clearInterval(tmr);
-      tmr = setInterval(ld, 3000);
-    }
-    
-    async function ld() {
-      if (!pid) return;
-      try {
-        const r = await fetch(API + '/messages/' + uid);
-        const d = await r.json();
-        if (!d.success) return;
+        const res = await fetch(API + '/messages/' + userId);
+        const data = await res.json();
         
-        // フィルタ + ソート（古い順）
-        const ms = d.data
-          .filter(m => (m.fromProfileId === uid && m.toProfileId === pid) || (m.fromProfileId === pid && m.toProfileId === uid))
+        if (!data.success) throw new Error('取得失敗');
+        
+        // 相手とのメッセージのみフィルター
+        const msgs = data.data
+          .filter(m => 
+            (m.fromProfileId === userId && m.toProfileId === chatId) ||
+            (m.fromProfileId === chatId && m.toProfileId === userId)
+          )
           .sort((a, b) => {
-            // created_at または createdAt を試す
-            const dtA = new Date(a.created_at || a.createdAt);
-            const dtB = new Date(b.created_at || b.createdAt);
+            const dtA = new Date(a.createdAt || a.created_at);
+            const dtB = new Date(b.createdAt || b.created_at);
             return dtA - dtB;
           });
         
-        console.log('メッセージ数:', ms.length);
-        if (ms.length > 0) {
-          const first = ms[0];
-          const last = ms[ms.length - 1];
-          console.log('最初:', first.message, new Date(first.created_at || first.createdAt));
-          console.log('最後:', last.message, new Date(last.created_at || last.createdAt));
-        }
+        // 未読メッセージID収集（自分宛ての未読のみ）
+        unreadMessageIds = msgs
+          .filter(m => m.toProfileId === userId && !m.read)
+          .map(m => m.id);
         
-        const box = document.getElementById('ms');
-        if (ms.length === 0) {
-          box.innerHTML = '<div class="emp"><div style="font-size:48px;">👋</div><div>まだメッセージなし</div></div>';
-          return;
-        }
+        const box = document.getElementById('msgs');
+        box.innerHTML = msgs.map(m => {
+          const isMe = m.fromProfileId === userId;
+          const dt = new Date(m.createdAt || m.created_at);
+          const time = !isNaN(dt.getTime()) ? 
+            dt.toLocaleTimeString('ja-JP', {hour:'2-digit',minute:'2-digit'}) : '';
+          
+          return `<div class="msg ${isMe ? 'me' : 'other'}">
+            <div>${esc(m.message)}</div>
+            ${time ? `<div class="msg-time">${time}</div>` : ''}
+          </div>`;
+        }).join('');
         
-        const html = '<div class="m-list">' + ms.map(m => {
-          const snt = m.fromProfileId === uid;
-          const dt = new Date(m.created_at || m.createdAt);
-          const tm = !isNaN(dt.getTime()) ? dt.toLocaleTimeString('ja-JP', {hour:'2-digit',minute:'2-digit'}) : '';
-          return `<div class="m ${snt ? 'sent' : 'received'}"><div class="m-bub">${esc(m.message)}<div class="m-time">${tm}</div></div></div>`;
-        }).join('') + '</div>';
-        
-        box.innerHTML = html;
         box.scrollTop = box.scrollHeight;
-      } catch (e) { console.error(e); }
+        
+        // 未読メッセージを自動既読処理
+        if (unreadMessageIds.length > 0) {
+          await markMessagesAsRead(unreadMessageIds);
+        }
+      } catch (e) {
+        console.error(e);
+      }
     }
     
-    function esc(t) { return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-    
-    async function snd() {
-      const inp = document.getElementById('t');
-      const msg = inp.value.trim();
-      if (!msg || !pid) return;
+    async function markMessagesAsRead(messageIds) {
       try {
-        const r = await fetch(API + '/messages', {
+        await fetch(API + '/messages/mark-multiple-read', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({fromProfileId: uid, toProfileId: pid, message: msg})
+          body: JSON.stringify({ messageIds })
         });
-        const d = await r.json();
-        if (!d.success) throw new Error('失敗');
-        inp.value = '';
-        await ld();
-        ldL();
-      } catch (e) { console.error(e); }
+        console.log('既読処理完了:', messageIds.length, '件');
+      } catch (e) {
+        console.error('既読処理エラー:', e);
+      }
     }
     
-    window.addEventListener('load', init);
+    async function send() {
+      const inp = document.getElementById('msgInput');
+      const msg = inp.value.trim();
+      if (!msg) return;
+      
+      try {
+        const res = await fetch(API + '/messages', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            fromProfileId: userId,
+            toProfileId: chatId,
+            message: msg
+          })
+        });
+        
+        const data = await res.json();
+        if (data.success) {
+          inp.value = '';
+          load();
+        } else {
+          alert('送信失敗');
+        }
+      } catch (e) {
+        alert('エラー: ' + e.message);
+      }
+    }
+    
+    function esc(t) {
+      const d = document.createElement('div');
+      d.textContent = t;
+      return d.innerHTML;
+    }
+    
+    // 初回読み込み + 3秒ごとに更新
+    load();
+    setInterval(load, 3000);
   </script>
 </body>
 </html>

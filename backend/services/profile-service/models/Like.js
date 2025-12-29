@@ -14,6 +14,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.UUID,
       allowNull: false,
       references: { model: 'profiles', key: 'id' }
+    },
+    read: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: '既読フラグ'
     }
   }, {
     tableName: 'likes',
