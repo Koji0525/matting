@@ -1,101 +1,87 @@
 const db = require('../models');
-const { Op } = require('sequelize');
 
-exports.create = async (req, res) => {
+// 全プロフィール取得
+exports.getAllProfiles = async (req, res) => {
   try {
-    const profile = await db.Profile.create(req.body);
-    res.status(201).json({
-      success: true,
-      data: profile,
+    const profiles = await db.Profile.findAll();
+    
+    // 年齢を追加
+    const profilesWithAge = profiles.map(p => {
+      const data = p.toJSON();
+      data.age = p.getAge();
+      return data;
     });
+    
+    res.json({ success: true, data: profilesWithAge });
   } catch (error) {
-    console.error('プロフィール作成エラー:', error);
-    res.status(500).json({ error: error.message });
+    console.error('Get all profiles error:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-exports.getAll = async (req, res) => {
-  try {
-    const profiles = await db.Profile.findAll({
-      order: [['created_at', 'DESC']],
-    });
-    res.json({
-      success: true,
-      count: profiles.length,
-      data: profiles,
-    });
-  } catch (error) {
-    console.error('プロフィール取得エラー:', error);
-    res.status(500).json({ error: error.message });
-  }
-};
-
-exports.getById = async (req, res) => {
+// 単一プロフィール取得
+exports.getProfile = async (req, res) => {
   try {
     const profile = await db.Profile.findByPk(req.params.id);
     if (!profile) {
-      return res.status(404).json({ error: 'プロフィールが見つかりません' });
+      return res.status(404).json({ success: false, message: 'Profile not found' });
     }
-    res.json({
-      success: true,
-      data: profile,
-    });
+    
+    const data = profile.toJSON();
+    data.age = profile.getAge();
+    
+    res.json({ success: true, data });
   } catch (error) {
-    console.error('プロフィール取得エラー:', error);
-    res.status(500).json({ error: error.message });
+    console.error('Get profile error:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-exports.update = async (req, res) => {
+// プロフィール作成
+exports.createProfile = async (req, res) => {
   try {
-    const { id } = req.params;
-    const profile = await db.Profile.findByPk(id);
+    const profile = await db.Profile.create(req.body);
+    const data = profile.toJSON();
+    data.age = profile.getAge();
     
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('Create profile error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ✅ プロフィール更新
+exports.updateProfile = async (req, res) => {
+  try {
+    const profile = await db.Profile.findByPk(req.params.id);
     if (!profile) {
-      return res.status(404).json({ error: 'プロフィールが見つかりません' });
+      return res.status(404).json({ success: false, message: 'Profile not found' });
     }
     
     await profile.update(req.body);
+    const data = profile.toJSON();
+    data.age = profile.getAge();
     
-    res.json({
-      success: true,
-      message: 'プロフィールを更新しました',
-      data: profile,
-    });
+    res.json({ success: true, data, message: 'Profile updated successfully' });
   } catch (error) {
-    console.error('プロフィール更新エラー:', error);
-    res.status(500).json({ error: error.message });
+    console.error('Update profile error:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-exports.search = async (req, res) => {
+// プロフィール削除
+exports.deleteProfile = async (req, res) => {
   try {
-    const { ageMin, ageMax, gender, country } = req.body;
-    
-    const where = {};
-    
-    if (ageMin || ageMax) {
-      where.age = {};
-      if (ageMin) where.age[Op.gte] = ageMin;
-      if (ageMax) where.age[Op.lte] = ageMax;
+    const profile = await db.Profile.findByPk(req.params.id);
+    if (!profile) {
+      return res.status(404).json({ success: false, message: 'Profile not found' });
     }
     
-    if (gender) where.gender = gender;
-    if (country) where.country = country;
-    
-    const profiles = await db.Profile.findAll({
-      where,
-      limit: 50,
-      order: [['created_at', 'DESC']],
-    });
-    
-    res.json({
-      success: true,
-      count: profiles.length,
-      data: profiles,
-    });
+    await profile.destroy();
+    res.json({ success: true, message: 'Profile deleted successfully' });
   } catch (error) {
-    console.error('検索エラー:', error);
-    res.status(500).json({ error: error.message });
+    console.error('Delete profile error:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };

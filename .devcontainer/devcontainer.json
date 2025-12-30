@@ -1,0 +1,39 @@
+{
+  "name": "MLMMP Development",
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  
+  // ポート転送設定（永続化）
+  "forwardPorts": [3002, 8000, 5432],
+  
+  // ポート属性（自動公開設定）
+  "portsAttributes": {
+    "3002": {
+      "label": "Profile Service API",
+      "onAutoForward": "notify",
+      "visibility": "public"
+    },
+    "8000": {
+      "label": "Web UI",
+      "onAutoForward": "notify",
+      "visibility": "public"
+    },
+    "5432": {
+      "label": "PostgreSQL",
+      "onAutoForward": "ignore",
+      "visibility": "private"
+    }
+  },
+  
+  // コンテナ作成後に実行するコマンド
+  "postCreateCommand": "echo '✅ Codespace ready'",
+  
+  // 拡張機能
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  }
+}

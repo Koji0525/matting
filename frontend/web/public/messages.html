@@ -6,48 +6,81 @@
   <title>メッセージ - MLMMP</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: sans-serif; background: #0d1117; color: #c9d1d9; height: 100vh; overflow: hidden; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0d1117; color: #c9d1d9; height: 100vh; overflow: hidden; }
     
     .container { display: flex; height: 100vh; }
     
-    /* 左サイドバー：会話一覧 */
-    .sidebar { width: 400px; background: #161b22; border-right: 1px solid #30363d; display: flex; flex-direction: column; }
-    .sidebar-header { padding: 20px; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; }
-    .sidebar-header h2 { color: #58a6ff; }
-    .back-btn { padding: 8px 16px; background: #21262d; color: #58a6ff; border: 1px solid #30363d; border-radius: 6px; cursor: pointer; font-size: 14px; }
+    .sidebar { width: 380px; background: #161b22; border-right: 1px solid #30363d; display: flex; flex-direction: column; }
+    .sidebar-header { padding: 14px; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; }
+    .sidebar-header h2 { color: #58a6ff; font-size: 17px; font-weight: 600; }
+    .back-btn { padding: 6px 12px; background: #21262d; color: #58a6ff; border: 1px solid #30363d; border-radius: 6px; cursor: pointer; font-size: 12px; }
     .back-btn:hover { background: #30363d; }
     
     .conversation-list { flex: 1; overflow-y: auto; }
-    .conv-item { padding: 16px 20px; border-bottom: 1px solid #21262d; cursor: pointer; transition: background 0.2s; }
+    .conv-item { padding: 10px 12px; border-bottom: 1px solid #21262d; cursor: pointer; transition: background 0.1s; display: flex; gap: 10px; align-items: center; }
     .conv-item:hover { background: #21262d; }
     .conv-item.active { background: #1c2128; border-left: 3px solid #58a6ff; }
-    .conv-name { font-size: 16px; font-weight: 600; color: #c9d1d9; margin-bottom: 4px; }
-    .conv-preview { font-size: 14px; color: #8b949e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .conv-time { font-size: 12px; color: #6e7681; float: right; }
-    .unread-badge { display: inline-block; background: #238636; color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; margin-left: 8px; }
+    .conv-avatar { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 16px; flex-shrink: 0; }
+    .conv-content { flex: 1; min-width: 0; }
+    .conv-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3px; }
+    .conv-name { font-size: 14px; font-weight: 600; color: #c9d1d9; }
+    .conv-time { font-size: 10px; color: #6e7681; }
+    .conv-preview { font-size: 12px; color: #8b949e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .unread-badge { display: inline-block; background: #238636; color: white; padding: 1px 5px; border-radius: 8px; font-size: 10px; font-weight: 600; margin-left: 6px; }
     
-    /* 右チャットエリア */
-    .chat-area { flex: 1; display: flex; flex-direction: column; }
-    .chat-header { background: #161b22; padding: 20px; border-bottom: 1px solid #30363d; }
-    .chat-header h2 { color: #58a6ff; }
+    .chat-area { flex: 1; display: flex; flex-direction: column; background: #0d1117; }
+    .chat-header { background: #161b22; padding: 10px 14px; border-bottom: 1px solid #30363d; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+    .chat-header:hover { background: #1c2128; }
+    .chat-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 16px; flex-shrink: 0; }
+    .chat-header-info { flex: 1; }
+    .chat-header h2 { color: #c9d1d9; font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+    .chat-status { font-size: 12px; color: #8b949e; }
     
-    .msgs { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; min-height: 0; }
-    .msg { max-width: 70%; margin-bottom: 15px; padding: 12px 16px; border-radius: 18px; word-wrap: break-word; }
-    .msg.me { align-self: flex-end; background: #238636; color: white; }
-    .msg.other { align-self: flex-start; background: #21262d; color: #c9d1d9; }
-    .msg-time { font-size: 11px; opacity: 0.6; margin-top: 4px; }
+    .msgs { flex: 1; overflow-y: auto; padding: 6px 10px; display: flex; flex-direction: column; min-height: 0; }
+    .msg-wrapper { display: flex; margin-bottom: 1px; }
+    .msg-wrapper.me { justify-content: flex-end; }
+    .msg-wrapper.other { justify-content: flex-start; }
+    .msg { max-width: 60%; padding: 3px 7px; border-radius: 7px; word-wrap: break-word; white-space: pre-line; overflow-wrap: break-word; font-size: 13px; line-height: 1.3; position: relative; cursor: pointer; display: inline-block; }
+    .msg:hover { opacity: 0.92; }
+    .msg.me { background: #238636; color: white; border-radius: 7px 7px 2px 7px; }
+    .msg.other { background: #21262d; color: #c9d1d9; border-radius: 7px 7px 7px 2px; }
+    .msg-time { font-size: 9px; opacity: 0.45; margin-top: 1px; text-align: right; line-height: 1; }
     
-    .chat-input { flex-shrink: 0; padding: 20px; background: #161b22; border-top: 1px solid #30363d; display: flex; gap: 10px; }
-    .chat-input input { flex: 1; padding: 12px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #c9d1d9; font-size: 14px; }
-    .chat-input button { padding: 12px 24px; background: #238636; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    .chat-input { flex-shrink: 0; padding: 8px 10px; background: #161b22; border-top: 1px solid #30363d; display: flex; gap: 8px; align-items: flex-end; }
+    .chat-input textarea { flex: 1; padding: 7px 9px; background: #0d1117; border: 1px solid #30363d; border-radius: 5px; color: #c9d1d9; font-size: 13px; font-family: sans-serif; resize: none; min-height: 34px; max-height: 100px; line-height: 1.3; }
+    .chat-input textarea:focus { outline: none; border-color: #58a6ff; }
+    .chat-input button { padding: 7px 14px; background: #238636; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; font-size: 12px; white-space: nowrap; }
     .chat-input button:hover { background: #2ea043; }
+    .chat-input button:disabled { background: #21262d; cursor: not-allowed; }
     
-    .empty-state { display: flex; align-items: center; justify-content: center; height: 100%; color: #8b949e; font-size: 18px; }
+    .empty-state { display: flex; align-items: center; justify-content: center; height: 100%; color: #8b949e; font-size: 14px; }
+    
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); z-index: 1000; align-items: center; justify-content: center; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: #161b22; border-radius: 12px; width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+    .modal-header { padding: 20px; border-bottom: 1px solid #30363d; display: flex; align-items: center; gap: 16px; }
+    .modal-avatar { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 26px; }
+    .modal-name { font-size: 20px; font-weight: 700; color: #c9d1d9; }
+    .modal-age { font-size: 16px; color: #8b949e; margin-top: 4px; }
+    .modal-body { padding: 20px; }
+    .modal-section { margin-bottom: 16px; }
+    .modal-label { font-size: 11px; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; font-weight: 600; }
+    .modal-value { font-size: 14px; color: #c9d1d9; line-height: 1.5; }
+    .modal-bio { background: #0d1117; padding: 12px; border-radius: 6px; font-size: 14px; line-height: 1.5; color: #c9d1d9; white-space: pre-line; }
+    .modal-actions { padding: 16px 20px; border-top: 1px solid #30363d; display: flex; gap: 10px; }
+    .modal-btn { flex: 1; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s; }
+    .modal-btn.like { background: #da3633; color: white; }
+    .modal-btn.like:hover { background: #e6534f; }
+    .modal-btn.close { background: #21262d; color: #c9d1d9; }
+    .modal-btn.close:hover { background: #30363d; }
+    
+    .context-menu { position: fixed; background: #21262d; border: 1px solid #30363d; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: none; z-index: 999; min-width: 100px; }
+    .context-menu-item { padding: 7px 11px; cursor: pointer; font-size: 12px; color: #c9d1d9; }
+    .context-menu-item:hover { background: #30363d; }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- 左：会話一覧 -->
     <div class="sidebar">
       <div class="sidebar-header">
         <h2>💬 メッセージ</h2>
@@ -56,55 +89,91 @@
       <div class="conversation-list" id="convList"></div>
     </div>
     
-    <!-- 右：チャット画面 -->
     <div class="chat-area">
-      <div class="chat-header">
-        <h2 id="chatName">チャットを選択してください</h2>
+      <div class="chat-header" id="chatHeader" onclick="showProfile()">
+        <div class="chat-avatar" id="chatAvatar">?</div>
+        <div class="chat-header-info">
+          <h2 id="chatName">チャットを選択してください</h2>
+          <div class="chat-status" id="chatStatus">オンライン</div>
+        </div>
       </div>
+      
       <div class="msgs" id="msgs">
         <div class="empty-state">左側から会話を選択してください</div>
       </div>
+      
       <div class="chat-input">
-        <input type="text" id="msgInput" placeholder="メッセージを入力..." onkeypress="if(event.key==='Enter') send()" disabled>
+        <textarea id="msgInput" placeholder="メッセージを入力..." disabled></textarea>
         <button onclick="send()" id="sendBtn" disabled>送信</button>
       </div>
     </div>
+  </div>
+  
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-avatar" id="modalAvatar">?</div>
+        <div>
+          <div class="modal-name" id="modalName">名前</div>
+          <div class="modal-age" id="modalAge">年齢</div>
+        </div>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-actions">
+        <button class="modal-btn like" onclick="likeFromModal()">❤️ いいね</button>
+        <button class="modal-btn close" onclick="closeModal()">閉じる</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="context-menu" id="contextMenu">
+    <div class="context-menu-item" onclick="replyToMessage()">↩️ 返信</div>
   </div>
 
   <script>
     const API = 'https://silver-space-cod-w6xr46r4q4r39675-3002.app.github.dev/api';
     const userId = localStorage.getItem('userId');
-    const userName = localStorage.getItem('userName');
+    let conversations = [], currentChatId = null, currentChatName = null, allMessages = [], currentProfile = null, allProfiles = [];
     
     if (!userId) {
       alert('ログインしてください');
       window.location.href = 'index.html';
     }
     
-    let conversations = [];
-    let currentChatId = null;
-    let allMessages = [];
+    function getInitial(name) {
+      return name ? name.charAt(0).toUpperCase() : '?';
+    }
+    
+    async function loadProfiles() {
+      try {
+        const res = await fetch(API + '/profiles');
+        const data = await res.json();
+        if (data.success) {
+          allProfiles = data.data;
+        }
+      } catch (e) {
+        console.error('プロフィール取得エラー:', e);
+      }
+    }
     
     async function loadConversations() {
       try {
         const res = await fetch(API + '/messages/' + userId);
         const data = await res.json();
-        
         if (!data.success) throw new Error('取得失敗');
         
         allMessages = data.data;
-        
-        // 会話相手ごとにグループ化
         const convMap = new Map();
         
         allMessages.forEach(msg => {
           const partnerId = msg.fromProfileId === userId ? msg.toProfileId : msg.fromProfileId;
-          const partnerName = msg.fromProfileId === userId ? msg.toProfile.name : msg.fromProfile.name;
+          const partner = msg.fromProfileId === userId ? msg.toProfile : msg.fromProfile;
           
           if (!convMap.has(partnerId)) {
             convMap.set(partnerId, {
               id: partnerId,
-              name: partnerName,
+              name: partner.name,
+              profile: partner,
               lastMessage: msg.message,
               lastTime: msg.createdAt,
               unreadCount: 0,
@@ -115,32 +184,27 @@
           const conv = convMap.get(partnerId);
           conv.messages.push(msg);
           
-          // 最新メッセージを更新
           if (new Date(msg.createdAt) > new Date(conv.lastTime)) {
             conv.lastMessage = msg.message;
             conv.lastTime = msg.createdAt;
           }
           
-          // 未読数カウント（自分宛ての未読のみ）
           if (msg.toProfileId === userId && !msg.read) {
             conv.unreadCount++;
           }
         });
         
-        conversations = Array.from(convMap.values())
-          .sort((a, b) => new Date(b.lastTime) - new Date(a.lastTime));
-        
+        conversations = Array.from(convMap.values()).sort((a, b) => new Date(b.lastTime) - new Date(a.lastTime));
         displayConversations();
       } catch (e) {
-        console.error('会話一覧取得エラー:', e);
+        console.error('会話取得エラー:', e);
       }
     }
     
     function displayConversations() {
       const list = document.getElementById('convList');
-      
       if (conversations.length === 0) {
-        list.innerHTML = '<div style="padding: 40px 20px; text-align: center; color: #8b949e;">メッセージがありません</div>';
+        list.innerHTML = '<div style="padding: 40px 20px; text-align: center; color: #8b949e; font-size: 13px;">メッセージがありません</div>';
         return;
       }
       
@@ -148,24 +212,47 @@
         const time = new Date(conv.lastTime).toLocaleTimeString('ja-JP', {hour:'2-digit',minute:'2-digit'});
         const unreadBadge = conv.unreadCount > 0 ? `<span class="unread-badge">${conv.unreadCount}</span>` : '';
         const activeClass = conv.id === currentChatId ? 'active' : '';
+        const initial = getInitial(conv.name);
         
-        return `<div class="conv-item ${activeClass}" onclick="openChat('${conv.id}', '${conv.name}')">
-          <div class="conv-name">
-            ${conv.name}${unreadBadge}
-            <span class="conv-time">${time}</span>
+        return `<div class="conv-item ${activeClass}" onclick="openChat('${conv.id}')">
+          <div class="conv-avatar">${initial}</div>
+          <div class="conv-content">
+            <div class="conv-header">
+              <span class="conv-name">${esc(conv.name)}${unreadBadge}</span>
+              <span class="conv-time">${time}</span>
+            </div>
+            <div class="conv-preview">${esc(conv.lastMessage.substring(0, 35))}${conv.lastMessage.length > 35 ? '...' : ''}</div>
           </div>
-          <div class="conv-preview">${esc(conv.lastMessage)}</div>
         </div>`;
       }).join('');
     }
     
     function openChat(chatId, chatName) {
       currentChatId = chatId;
-      document.getElementById('chatName').textContent = chatName + ' とのチャット';
+      const conv = conversations.find(c => c.id === chatId);
+      
+      if (conv) {
+        currentProfile = conv.profile;
+        currentChatName = conv.name;
+      } else {
+        // ✅ 新規チャット：プロフィールから情報取得
+        const profile = allProfiles.find(p => p.id === chatId);
+        if (profile) {
+          currentProfile = profile;
+          currentChatName = chatName || profile.name;
+        } else {
+          currentChatName = chatName || '未知のユーザー';
+        }
+      }
+      
+      const initial = getInitial(currentChatName);
+      document.getElementById('chatAvatar').textContent = initial;
+      document.getElementById('chatName').textContent = currentChatName;
+      document.getElementById('chatStatus').textContent = 'オンライン';
       document.getElementById('msgInput').disabled = false;
       document.getElementById('sendBtn').disabled = false;
       
-      displayConversations(); // アクティブ状態を更新
+      displayConversations();
       loadMessages();
     }
     
@@ -173,16 +260,16 @@
       if (!currentChatId) return;
       
       const conv = conversations.find(c => c.id === currentChatId);
-      if (!conv) return;
       
-      const msgs = conv.messages.sort((a, b) => {
-        return new Date(a.createdAt) - new Date(b.createdAt);
-      });
+      if (!conv || !conv.messages || conv.messages.length === 0) {
+        // ✅ メッセージなし：空の状態を表示
+        const box = document.getElementById('msgs');
+        box.innerHTML = '<div class="empty-state">メッセージを送信して会話を始めましょう</div>';
+        return;
+      }
       
-      // 未読メッセージID収集
-      const unreadIds = msgs
-        .filter(m => m.toProfileId === userId && !m.read)
-        .map(m => m.id);
+      const msgs = conv.messages.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      const unreadIds = msgs.filter(m => m.toProfileId === userId && !m.read).map(m => m.id);
       
       const box = document.getElementById('msgs');
       box.innerHTML = msgs.map(m => {
@@ -190,15 +277,16 @@
         const dt = new Date(m.createdAt);
         const time = dt.toLocaleTimeString('ja-JP', {hour:'2-digit',minute:'2-digit'});
         
-        return `<div class="msg ${isMe ? 'me' : 'other'}">
-          <div>${esc(m.message)}</div>
-          <div class="msg-time">${time}</div>
+        return `<div class="msg-wrapper ${isMe ? 'me' : 'other'}">
+          <div class="msg ${isMe ? 'me' : 'other'}" oncontextmenu="showContextMenu(event); return false;">
+            <div>${esc(m.message)}</div>
+            <div class="msg-time">${time}</div>
+          </div>
         </div>`;
       }).join('');
       
       box.scrollTop = box.scrollHeight;
       
-      // 自動既読処理
       if (unreadIds.length > 0) {
         await markMessagesAsRead(unreadIds);
         conv.unreadCount = 0;
@@ -214,9 +302,79 @@
           body: JSON.stringify({ messageIds })
         });
       } catch (e) {
-        console.error('既読処理エラー:', e);
+        console.error(e);
       }
     }
+    
+    function showProfile() {
+      if (!currentProfile) return;
+      
+      const labelMap = {
+        'non-smoker': '吸わない', 'sometimes': '時々吸う', 'smoker': '吸う', 'trying-to-quit': '禁煙中',
+        'non-drinker': '飲まない', 'occasionally': 'たまに', 'socially': '付き合い程度', 'regularly': 'よく飲む',
+        'never-married': '未婚', 'divorced': '離婚', 'widowed': '死別',
+        'male': '男性', 'female': '女性', 'other': 'その他'
+      };
+      
+      const p = currentProfile;
+      const initial = getInitial(p.name);
+      
+      document.getElementById('modalAvatar').textContent = initial;
+      document.getElementById('modalName').textContent = p.name;
+      document.getElementById('modalAge').textContent = `${p.age}歳 · ${labelMap[p.gender] || p.gender}`;
+      
+      let bodyHTML = '';
+      if (p.city) bodyHTML += `<div class="modal-section"><div class="modal-label">居住地</div><div class="modal-value">${esc(p.city)}</div></div>`;
+      if (p.occupation) bodyHTML += `<div class="modal-section"><div class="modal-label">職業</div><div class="modal-value">${esc(p.occupation)}</div></div>`;
+      if (p.annualIncome) bodyHTML += `<div class="modal-section"><div class="modal-label">年収</div><div class="modal-value">${esc(p.annualIncome)}</div></div>`;
+      if (p.smoking) bodyHTML += `<div class="modal-section"><div class="modal-label">タバコ</div><div class="modal-value">${labelMap[p.smoking] || esc(p.smoking)}</div></div>`;
+      if (p.drinking) bodyHTML += `<div class="modal-section"><div class="modal-label">お酒</div><div class="modal-value">${labelMap[p.drinking] || esc(p.drinking)}</div></div>`;
+      if (p.marriageHistory) bodyHTML += `<div class="modal-section"><div class="modal-label">結婚歴</div><div class="modal-value">${labelMap[p.marriageHistory] || esc(p.marriageHistory)}</div></div>`;
+      if (p.hasChildren !== null && p.hasChildren !== undefined) bodyHTML += `<div class="modal-section"><div class="modal-label">子ども</div><div class="modal-value">${p.hasChildren ? 'いる' : 'いない'}</div></div>`;
+      if (p.religion) bodyHTML += `<div class="modal-section"><div class="modal-label">宗教</div><div class="modal-value">${esc(p.religion)}</div></div>`;
+      if (p.bio) bodyHTML += `<div class="modal-section"><div class="modal-label">自己紹介</div><div class="modal-bio">${esc(p.bio)}</div></div>`;
+      if (p.other) bodyHTML += `<div class="modal-section"><div class="modal-label">その他</div><div class="modal-bio">${esc(p.other)}</div></div>`;
+      
+      document.getElementById('modalBody').innerHTML = bodyHTML;
+      document.getElementById('modalOverlay').classList.add('show');
+    }
+    
+    function closeModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('modalOverlay').classList.remove('show');
+    }
+    
+    async function likeFromModal() {
+      if (!currentProfile) return;
+      try {
+        const res = await fetch(API + '/likes', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({fromProfileId: userId, toProfileId: currentProfile.id})
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('❤️ いいねを送信しました！');
+          closeModal();
+        }
+      } catch (e) {
+        alert('エラー: ' + e.message);
+      }
+    }
+    
+    function showContextMenu(e) {
+      e.preventDefault();
+      const menu = document.getElementById('contextMenu');
+      menu.style.display = 'block';
+      menu.style.left = e.pageX + 'px';
+      menu.style.top = e.pageY + 'px';
+    }
+    
+    document.addEventListener('click', () => {
+      document.getElementById('contextMenu').style.display = 'none';
+    });
+    
+    function replyToMessage() {}
     
     async function send() {
       if (!currentChatId) return;
@@ -239,10 +397,9 @@
         const data = await res.json();
         if (data.success) {
           inp.value = '';
+          inp.style.height = 'auto';
           await loadConversations();
           loadMessages();
-        } else {
-          alert('送信失敗');
         }
       } catch (e) {
         alert('エラー: ' + e.message);
@@ -250,34 +407,49 @@
     }
     
     function esc(t) {
+      if (!t) return '';
       const d = document.createElement('div');
       d.textContent = t;
       return d.innerHTML;
     }
     
-    // 初回読み込み + 5秒ごとに更新
-    // 初回ロード時にchatIdがあれば自動選択
+    document.addEventListener('DOMContentLoaded', () => {
+      const input = document.getElementById('msgInput');
+      
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          send();
+        }
+      });
+      
+      input.addEventListener('input', () => {
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 100) + 'px';
+      });
+    });
+    
+    // ✅ 初回ロード：プロフィール取得 + 会話取得
     const savedChatId = localStorage.getItem('chatId');
     const savedChatName = localStorage.getItem('chatName');
-    if (savedChatId) {
-      setTimeout(() => {
-        const conv = conversations.find(c => c.id === savedChatId);
-        if (conv) {
-          openChat(savedChatId, savedChatName || conv.name);
-        } else {
+    
+    (async () => {
+      await loadProfiles();
+      await loadConversations();
+      
+      // ✅ 検索画面から遷移した場合
+      if (savedChatId) {
+        setTimeout(() => {
           openChat(savedChatId, savedChatName);
-        }
-        localStorage.removeItem('chatId');
-        localStorage.removeItem('chatName');
-      }, 1000);
-    }
-
-    loadConversations();
+          localStorage.removeItem('chatId');
+          localStorage.removeItem('chatName');
+        }, 500);
+      }
+    })();
+    
     setInterval(() => {
       loadConversations();
-      if (currentChatId) {
-        loadMessages();
-      }
+      if (currentChatId) loadMessages();
     }, 5000);
   </script>
 </body>
